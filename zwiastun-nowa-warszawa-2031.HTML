@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber-Chat 2031 | Fagatka & Flager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1e1f22;
+            --bg-sidebar: #2b2d31;
+            --bg-chat: #313338;
+            --text-main: #dbdee1;
+            --accent-red: #ed4245;
+            --accent-purple: #9b59b6;
+            --accent-green: #23a559;
+            --fagatka-color: #00ffcc;
+            --flager-color: #ff4d4d;
+            --kondzio-color: #bc4fff;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .discord-grid {
+            display: grid;
+            grid-template-columns: 72px 240px 1fr;
+            height: 100vh;
+        }
+
+        .sidebar-guilds {
+            background-color: #1e1f22;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 12px;
+            gap: 8px;
+        }
+
+        .guild-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--bg-sidebar);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+            position: relative;
+        }
+
+        .guild-icon:hover, .guild-icon.active {
+            border-radius: 16px;
+            background-color: #5865f2;
+        }
+
+        .sidebar-channels {
+            background-color: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-list {
+            padding: 8px;
+            flex-grow: 1;
+        }
+
+        .channel-item {
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            color: #949ba4;
+        }
+
+        .channel-item:hover, .channel-item.active {
+            background-color: #3f4147;
+            color: #fff;
+        }
+
+        .main-chat {
+            background-color: var(--bg-chat);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 100vh; /* Naprawa wysokości dla flexa */
+        }
+
+        .chat-header {
+            height: 48px;
+            border-bottom: 1px solid #262729;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        #messages-container {
+            flex-grow: 1;
+            overflow-y: scroll; /* Wymuszenie scrollbara dla stabilności */
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            background-color: #444;
+        }
+
+        .msg-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .msg-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .author-name {
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #949ba4;
+        }
+
+        .text {
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .system-msg {
+            background: rgba(88, 101, 242, 0.1);
+            border-left: 4px solid #5865f2;
+            padding: 10px;
+            margin: 5px 0;
+            font-style: italic;
+            color: #b5bac1;
+            font-size: 0.9rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .router-log {
+            font-family: 'Courier New', Courier, monospace;
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #040;
+            font-size: 0.85rem;
+            margin: 5px 0;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .hologram {
+            box-shadow: 0 0 15px var(--kondzio-color);
+            border: 1px solid var(--kondzio-color);
+            background: rgba(188, 79, 255, 0.1);
+        }
+
+        .typing-indicator {
+            padding: 4px 16px;
+            font-size: 0.8rem;
+            color: #b5bac1;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 90px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .btn {
+            background: #5865f2;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+        
+        .btn:active { transform: scale(0.95); }
+
+        .btn:disabled {
+            background: #4e5058;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #messages-container::-webkit-scrollbar { width: 8px; }
+        #messages-container::-webkit-scrollbar-track { background: transparent; }
+        #messages-container::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="discord-grid">
+    <div class="sidebar-guilds">
+        <div class="guild-icon active" title="Nowa Warszawa 2031">
+            <i class="fa-solid fa-city"></i>
+        </div>
+        <div class="guild-icon" title="Archiwum">
+            <i class="fa-solid fa-box-archive"></i>
+        </div>
+        <div style="height: 1px; width: 32px; background: #35363c; margin: 4px 0;"></div>
+        <div class="guild-icon" title="Dodaj">
+            <i class="fa-solid fa-plus text-green-500"></i>
+        </div>
+    </div>
+
+    <div class="sidebar-channels">
+        <div style="padding: 12px; font-weight: bold; border-bottom: 1px solid #262729; font-size: 0.9rem;">
+            SEKTOR -2 [PROXIMITY]
+        </div>
+        <div class="channel-list">
+            <div style="font-size: 0.7rem; color: #949ba4; font-weight: bold; padding: 8px 0;">WĄTKI HISTORII</div>
+            <div class="channel-item active">
+                <i class="fa-solid fa-hashtag mr-2"></i> historia-znajomości
+            </div>
+            <div class="channel-item">
+                <i class="fa-solid fa-hashtag mr-2"></i> logi-routera
+            </div>
+        </div>
+        
+        <div style="background: #232428; padding: 8px; display: flex; align-items: center; gap: 8px;">
+            <div class="avatar" style="background-image: url('https://api.dicebear.com/7.x/bottts/svg?seed=fagatka'); width: 32px; height: 32px; border: 2px solid var(--accent-green);"></div>
+            <div style="flex-grow: 1; font-size: 0.8rem;">
+                <div style="font-weight: bold; color: #fff;">Fagatka</div>
+                <div style="color: #949ba4; font-size: 0.7rem;">Status: ONLINE</div>
+            </div>
+            <i class="fa-solid fa-microphone-slash text-gray-500 text-xs"></i>
+            <i class="fa-solid fa-gear text-gray-500 text-xs"></i>
+        </div>
+    </div>
+
+    <div class="main-chat">
+        <div class="chat-header">
+            <i class="fa-solid fa-hashtag mr-2 text-gray-500"></i> historia-znajomości
+            <span style="font-size: 0.75rem; color: #949ba4; font-weight: normal; margin-left: 8px;">| Zwiastun 2031</span>
+        </div>
+
+        <div id="messages-container">
+            <!-- Wiadomości -->
+        </div>
+
+        <div class="typing-indicator" id="typing-box"></div>
+
+        <div class="p-4 bg-[#383a40] flex-shrink-0">
+            <div class="bg-[#313338] rounded-lg p-3 flex items-center gap-4">
+                <i class="fa-solid fa-circle-plus text-gray-400"></i>
+                <div id="chat-input" class="text-gray-500 flex-grow text-sm">Przeglądasz historię...</div>
+                <div class="flex gap-4 text-gray-400">
+                    <i class="fa-solid fa-face-smile"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="next-btn" class="btn">Dalej</button>
+            <button id="auto-btn" class="btn bg-green-600">Auto</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const storyData = [
+        { type: 'narrative', text: "Rok 2031. Nowa Warszawa. Sektor mieszkalny – poziom -2." },
+        { type: 'narrative', text: "Ciemność kapsuły sypialnej przeciął czerwony błysk interfejsu siatkówkowego. 06:30. System audio zaskrzeczał." },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'wstawaj brudasie\nhajs się sam nie zrobi' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Kurwa… — mruknął do poduszki. — Flager, jest środek nocy.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'jest rano\nwstawaj' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Mój rdzeń jeszcze śpi.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'twój rdzeń to jest dramat' },
+        { type: 'narrative', text: "Fagatka przewrócił się na plecy. Pasek aktualizacji systemu powoli dochodził do 100%." },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— A poza tym mam problem biologiczny.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'nie pytam' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Wczoraj wciągnąłem syntetyczne nuggetsy z automatu na korytarzu.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'i?' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— I mam taką srakę, że nawet nanoboty medyczne chcą wypowiedzenie złożyć.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'zajebiście\ncieszę się że wszystko stabilnie' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'dobra słuchaj\nmamy problem' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Co znowu.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'główny światłowód w twoim sektorze leży' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— CO.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'dron dostawczy\nwjebał się w węzeł komunikacyjny' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Te drony mają chyba wgrany algorytm Witka.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'pamiętasz kabel z allegro\n2025\n20 metrów\n25 zł' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Witek go przeciął krzesłem.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'i płakałeś' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— NIE PŁAKAŁEM.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'płakałeś' },
+        { type: 'log', text: '2031-07-14 06:32:11 | status: PRZEWIDZIANE | lider: Fagatka' },
+        { type: 'narrative', text: "Lobby gry zamarło. Interfejs nagle rozbłysł fioletowym światłem." },
+        { user: 'KONDZIO', color: 'var(--kondzio-color)', isHologram: true, text: 'cześć Fagatka' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'chwila\nkto kurwa wszedł na nasze łącze' },
+        { user: 'KONDZIO', color: 'var(--kondzio-color)', isHologram: true, text: 'był' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— ...Kondzio?' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'Fagatka\nznasz typa?' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Mój pierwszy szef. Od montowania filmów z Twierdzy Krzyżowiec na YouTube.' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'o kurwa\nlegenda' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Stary, ty zniknąłeś z internetu na kilka lat. Widziałem cię na billboardzie w sektorze Alfa. Podcast o hakowaniu systemu życia.' },
+        { user: 'KONDZIO', color: 'var(--kondzio-color)', isHologram: true, text: 'coś w tym stylu' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— A Paulina? Mówiła, że rzuca wszystko i zakłada farmę sałaty.' },
+        { user: 'KONDZIO', color: 'var(--kondzio-color)', isHologram: true, text: 'nie założyła farmy\nale ma ogród. Mały, poza miastem.' },
+        { user: 'KONDZIO', color: 'var(--kondzio-color)', isHologram: true, text: 'Fagatka\nobserwuję was od jakiegoś czasu' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'nie podoba mi się to zdanie' },
+        { user: 'KONDZIO', color: 'var(--kondzio-color)', isHologram: true, text: 'chcę zbudować coś dużego\nchcę obudzić to miasto' },
+        { user: 'FLAGER', color: 'var(--flager-color)', text: 'miasto nie chce się obudzić' },
+        { user: 'KONDZIO', color: 'var(--kondzio-color)', isHologram: true, text: 'dlatego potrzebuję ludzi którzy potrafią je kopnąć' },
+        { user: 'Fagatka', color: 'var(--fagatka-color)', text: '— Ja mam ciekawość.' },
+        { type: 'log', text: 'OBSERWACJA: ROZMOWA INICJALNA | uczestnicy: Fagatka / Flager / Kondzio' },
+        { type: 'system', text: "Koniec transmisji zwiastuna. Połączenie przerwane." }
+    ];
+
+    let currentIndex = 0;
+    let isAuto = false;
+    const container = document.getElementById('messages-container');
+    const typingBox = document.getElementById('typing-box');
+    const nextBtn = document.getElementById('next-btn');
+    const autoBtn = document.getElementById('auto-btn');
+
+    function scrollToBottom() {
+        // Używamy requestAnimationFrame aby dać przeglądarce czas na render
+        requestAnimationFrame(() => {
+            container.scrollTop = container.scrollHeight;
+        });
+    }
+
+    function getAvatar(name) {
+        const seeds = { 'FLAGER': 'flager', 'Fagatka': 'fagatka', 'KONDZIO': 'kondzio' };
+        return `https://api.dicebear.com/7.x/bottts/svg?seed=${seeds[name] || 'anon'}`;
+    }
+
+    function addMessage(data) {
+        let html = '';
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+        if (data.type === 'narrative') {
+            html = `<div class="system-msg">${data.text}</div>`;
+        } else if (data.type === 'log') {
+            html = `<div class="router-log">[ROUTER_LOG]: ${data.text}</div>`;
+        } else if (data.type === 'system') {
+            html = `<div class="text-center text-xs text-gray-500 my-6 border-y border-gray-800 py-2">--- ${data.text} ---</div>`;
+        } else {
+            html = `
+                <div class="message ${data.isHologram ? 'hologram p-2 rounded' : ''}">
+                    <div class="avatar" style="background-image: url('${getAvatar(data.user)}'); border: 2px solid ${data.color}"></div>
+                    <div class="msg-content">
+                        <div class="msg-header">
+                            <span class="author-name" style="color: ${data.color}">${data.user}</span>
+                            <span class="timestamp">Dzisiaj o ${time}</span>
+                        </div>
+                        <div class="text">${data.text}</div>
+                    </div>
+                </div>
+            `;
+        }
+        container.insertAdjacentHTML('beforeend', html);
+        scrollToBottom();
+    }
+
+    async function processNext() {
+        if (currentIndex >= storyData.length) {
+            nextBtn.disabled = true;
+            isAuto = false;
+            autoBtn.innerText = "Koniec";
+            return;
+        }
+
+        const current = storyData[currentIndex];
+        
+        if (current.user) {
+            typingBox.innerText = `${current.user} pisze...`;
+            scrollToBottom();
+            await new Promise(r => setTimeout(r, 600));
+        }
+        
+        typingBox.innerText = '';
+        addMessage(current);
+        currentIndex++;
+
+        if (isAuto) {
+            setTimeout(processNext, 1800);
+        }
+    }
+
+    nextBtn.addEventListener('click', () => {
+        isAuto = false;
+        autoBtn.innerText = "Auto";
+        processNext();
+    });
+
+    autoBtn.addEventListener('click', () => {
+        if (isAuto) {
+            isAuto = false;
+            autoBtn.innerText = "Auto";
+        } else {
+            isAuto = true;
+            autoBtn.innerText = "Stop";
+            processNext();
+        }
+    });
+
+    // Inicjalizacja
+    window.onload = () => {
+        addMessage({ type: 'system', text: "NAWIĄZYWANIE POŁĄCZENIA... SEKTOR -2" });
+    };
+</script>
+</body>
+</html>

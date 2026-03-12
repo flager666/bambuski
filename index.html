@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fagataka Femboy Meter - Mega Edycja</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 300px;
+        }
+        .step-transition {
+            transition: all 0.3s ease-in-out;
+        }
+        .option-btn {
+            transform: translateZ(0);
+            transition: all 0.2s ease;
+        }
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <!-- 
+    PALETTE: Energetic & Playful (Cyan #22d3ee, Pink #f472b6, Purple #a855f7)
+    NARRATIVE: Mega Edycja testu "pierwiastka fagatki" - 15 pytań.
+    CONFIRMATION: NEITHER Mermaid JS NOR SVG were used.
+    -->
+
+    <div id="app" class="w-full max-w-2xl bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-8 step-transition">
+        <!-- Ekran startowy -->
+        <div id="start-screen" class="text-center">
+            <div class="mb-6 inline-block p-4 rounded-full bg-cyan-500/10 border border-cyan-500/20">
+                <span class="text-4xl">👑</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500">
+                Fagataka Meter 3.0
+            </h1>
+            <p class="text-slate-400 mb-8 text-lg">
+                Mega Edycja. 15 pytań sprawdzających Twoją kompatybilność z legendarnym archetypem fagataki (042).
+            </p>
+            <button onclick="startQuiz()" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-bold py-4 px-12 rounded-full transition-all transform hover:scale-105 shadow-xl shadow-pink-500/20">
+                Rozpocznij Wyzwanie
+            </button>
+        </div>
+
+        <!-- Ekran Quizu -->
+        <div id="quiz-screen" class="hidden">
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="step-indicator" class="text-xs font-bold text-cyan-400 uppercase tracking-widest">Pytanie 1 z 15</span>
+                    <span id="progress-text" class="text-xs text-slate-500">7%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 h-full transition-all duration-500" style="width: 7%"></div>
+                </div>
+            </div>
+
+            <h2 id="question-text" class="text-2xl font-bold mb-8 min-h-[4rem] leading-tight">Pytanie?</h2>
+            
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Opcje generowane przez JS -->
+            </div>
+        </div>
+
+        <!-- Ekran Wyników -->
+        <div id="result-screen" class="hidden text-center">
+            <h2 class="text-2xl font-bold mb-2 text-slate-400 uppercase tracking-widest">Twój Poziom Misiowości:</h2>
+            <div id="result-title" class="text-5xl font-black mb-6 text-cyan-400 tracking-tighter drop-shadow-sm">ANALIZA...</div>
+            
+            <div class="chart-container mb-8">
+                <canvas id="resultChart"></canvas>
+            </div>
+
+            <div id="result-description" class="text-slate-300 mb-8 bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 leading-relaxed text-left italic">
+                Opis wyniku...
+            </div>
+
+            <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl transition-all border border-slate-700">
+                Powtórz badanie
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                q: "Twoje podejście do lekcji Wychowania Fizycznego (WF) to:",
+                options: [
+                    { text: "Kocham sport, bieganie to życie!", score: 0 },
+                    { text: "Nienawidzę, wymęczyli mnie, chcę tylko leżeć i odpoczywać.", score: 10 },
+                    { text: "Zależy, czy gramy w nogę.", score: 2 }
+                ]
+            },
+            {
+                q: "Kiedy kolega wysyła Ci swój nowy film na YouTube, reagujesz:",
+                options: [
+                    { text: "Daję łapkę w górę i piszę 'spoko'.", score: 2 },
+                    { text: "Piszę wielkimi literami 'ZAJEBISTE'.", score: 10 },
+                    { text: "Nie odpisuję, bo akurat gram.", score: 0 }
+                ]
+            },
+            {
+                q: "Twoje ulubione słownictwo na Discordzie w stanie 'pełnego rozluźnienia' to:",
+                options: [
+                    { text: "Wyszukane terminy i poprawne formy gramatyczne.", score: 0 },
+                    { text: "Pojedyncze słowa typu 'kupa', 'gowno', 'srak'.", score: 10 },
+                    { text: "Wyłącznie emotki i gify.", score: 5 }
+                ]
+            },
+            {
+                q: "Jak określiłbyś swój stan po szkole/pracy?",
+                options: [
+                    { text: "Mam energię na siłownię!", score: 0 },
+                    { text: "Samo słuchanie i chodzenie tam mnie wymęczyło, muszę na DC.", score: 10 },
+                    { text: "Jestem głodny, idę robić obiad.", score: 2 }
+                ]
+            },
+            {
+                q: "Twój pseudonim w internecie powinien:",
+                options: [
+                    { text: "Brzmieć groźnie i poważnie.", score: 0 },
+                    { text: "Być wzięty od jakiejś influencerki lub brzmieć uroczo/absurdalnie.", score: 10 },
+                    { text: "Być moim imieniem z nazwiskiem.", score: 0 }
+                ]
+            },
+            {
+                q: "Kolega pyta o stare pliki lub dźwięki 'Kondzia' na dysku. Co robisz?",
+                options: [
+                    { text: "Nie mam takich rzeczy na komputerze.", score: 0 },
+                    { text: "Mam, ale poszukam ich potem, bo teraz odpoczywam.", score: 10 },
+                    { text: "Wysyłam natychmiast, mam je na pulpicie.", score: 5 }
+                ]
+            },
+            {
+                q: "Ktoś pisze do Ciebie: 'Bez ciśnienia'. Twoja odpowiedź to zazwyczaj:",
+                options: [
+                    { text: "Dziękuję za wyrozumiałość.", score: 0 },
+                    { text: "K", score: 10 },
+                    { text: "Dobra, dobra, i tak to zrobię.", score: 3 }
+                ]
+            },
+            {
+                q: "Kolega idzie robić obiad. Twoja reakcja:",
+                options: [
+                    { text: "Smacznego!", score: 0 },
+                    { text: "Spoko xD", score: 10 },
+                    { text: "Co dobrego gotujesz?", score: 2 }
+                ]
+            },
+            {
+                q: "Jak wygląda Twoja aktywność na Discordzie?",
+                options: [
+                    { text: "Siedzę wieczorami i nocami, pisząc o niczym.", score: 10 },
+                    { text: "Wchodzę tylko w konkretnym celu.", score: 0 },
+                    { text: "Używam go głównie do rozmów głosowych w grach.", score: 4 }
+                ]
+            },
+            {
+                q: "Pojawia się nowa reakcja pod Twoją wiadomością (np. korona lub śmiech). Co robisz?",
+                options: [
+                    { text: "Ignoruję, to tylko piksel.", score: 0 },
+                    { text: "Dodaję kolejną, jeszcze bardziej absurdalną reakcję.", score: 10 },
+                    { text: "Pytam, o co chodzi.", score: 0 }
+                ]
+            },
+            {
+                q: "Twoja estetyka pisania na czacie to:",
+                options: [
+                    { text: "Wyłącznie małe litery, zero znaków interpunkcyjnych, dużo xd.", score: 10 },
+                    { text: "Zawsze zaczynam od wielkiej litery i kończę kropką.", score: 0 },
+                    { text: "Piszę poprawnie, ale bez polskich znaków.", score: 5 }
+                ]
+            },
+            {
+                q: "Przyjaciel prosi Cię o pomoc przy 'specjalu na 100 subów'. Twoja reakcja?",
+                options: [
+                    { text: "Jaram się tym bardziej niż on sam.", score: 10 },
+                    { text: "Pytam, ile mi za to zapłaci.", score: 0 },
+                    { text: "Powiem 'fajnie', ale nie kiwnę palcem.", score: 2 }
+                ]
+            },
+            {
+                q: "Jak reagujesz na trwającą rok relację PW na Discordzie?",
+                options: [
+                    { text: "To normalne, mam takich dziesiątki.", score: 2 },
+                    { text: "To dowód na braterską więź, którą należy pielęgnować shitpostingiem.", score: 10 },
+                    { text: "Po roku zazwyczaj zmieniam konto.", score: 0 }
+                ]
+            },
+            {
+                q: "Kiedy nauczyciel coś tłumaczy, Ty:",
+                options: [
+                    { text: "Uważnie słucham i robię notatki.", score: 0 },
+                    { text: "Uważam, że samo słuchanie go jest wyczerpujące fizycznie.", score: 10 },
+                    { text: "Rysuję w zeszycie.", score: 5 }
+                ]
+            },
+            {
+                q: "Ktoś przesyła Ci wiadomość 'jeden chuj xd'. Co o tym myślisz?",
+                options: [
+                    { text: "Niezbyt kulturalne, ignoruję.", score: 0 },
+                    { text: "Głębokie. Zgadzam się w pełni.", score: 10 },
+                    { text: "Pytam, o co mu chodzi.", score: 0 }
+                ]
+            }
+        ];
+
+        let currentStep = 0;
+        let totalScore = 0;
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentStep];
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('step-indicator').innerText = `Pytanie ${currentStep + 1} z ${questions.length}`;
+            
+            const progress = ((currentStep + 1) / questions.length) * 100;
+            document.getElementById('progress-text').innerText = `${Math.round(progress)}%`;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700/50 hover:border-cyan-500/50 transition-all group flex justify-between items-center";
+                btn.innerHTML = `
+                    <span class="font-medium text-slate-200 group-hover:text-white">${opt.text}</span>
+                    <span class="opacity-0 group-hover:opacity-100 text-cyan-400 transition-opacity">➔</span>
+                `;
+                btn.onclick = () => handleAnswer(opt.score);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(score) {
+            totalScore += score;
+            currentStep++;
+
+            if (currentStep < questions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            let title = "";
+            let desc = "";
+            const finalScorePercentage = Math.round((totalScore / (questions.length * 10)) * 100);
+
+            if (finalScorePercentage >= 90) {
+                title = "Fagataka Ultra";
+                desc = "Jesteś cyfrowym bliźniakiem fagataki (042). Twoja nienawiść do słuchania kogokolwiek w szkole i miłość do pisania 'kupa' osiągnęła poziom mistrzowski. Flager byłby z Ciebie dumny, misiaku.";
+            } else if (finalScorePercentage >= 70) {
+                title = "Misiowy Kompan";
+                desc = "Masz bardzo silny pierwiastek fagatki. Cenisz sobie chill, nienawidzisz WF-u i potrafisz docenić dobry montaż specjala na 100 subów. Discord to Twój naturalny ekosystem.";
+            } else if (finalScorePercentage >= 40) {
+                title = "Normalny Użytkownik";
+                desc = "Jesteś wyważony. Potrafisz rzucić 'xd' i odpocząć, ale szkoła jeszcze nie wyssała z Ciebie całej energii życiowej. Masz w sobie coś z fagatki, ale Gigachad WF-u wciąż w Tobie walczy.";
+            } else {
+                title = "Biegacz Poranny";
+                desc = "Kompletne przeciwieństwo fagatki. Prawdopodobnie piszesz z dużej litery, lubisz wysiłek fizyczny i nie rozumiesz, co jest śmiesznego w słowie 'gowno' wysłanym o 19:20.";
+            }
+
+            document.getElementById('result-title').innerText = title;
+            document.getElementById('result-description').innerText = desc;
+
+            renderChart(finalScorePercentage);
+        }
+
+        function renderChart(percentage) {
+            const ctx = document.getElementById('resultChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ["Energia fagatki (042)", "Normalność / Energia WF"],
+                    datasets: [{
+                        data: [percentage, 100 - percentage],
+                        backgroundColor: ['#22d3ee', '#1e293b'],
+                        borderColor: ['#22d3ee', '#334155'],
+                        borderWidth: 2,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '80%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const item = tooltipItems[0];
+                                    let label = item.chart.data.labels[item.dataIndex];
+                                    return Array.isArray(label) ? label.join(' ') : label;
+                                },
+                                label: function(context) {
+                                    return ` ${context.parsed}%`;
+                                }
+                            },
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            padding: 12,
+                            borderRadius: 10,
+                            borderColor: '#334155',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
